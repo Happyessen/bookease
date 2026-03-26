@@ -1,13 +1,19 @@
 // src/index.js
-// ─── BookEase MCP Server — Fixed for ChatGPT Plus ─────────────
-// Uses Streamable HTTP transport (ChatGPT requires /mcp endpoint)
-// The old /sse transport has been deprecated by OpenAI
+// ─── BookEase MCP Server — Apps SDK + OpenAI Integration ────
+// Features: MCP tools + Interactive booking UI component
+// Uses Streamable HTTP transport with Apps SDK extensions
 
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
+import { readFileSync } from 'fs';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
+import {
+  registerAppResource,
+  registerAppTool,
+  RESOURCE_MIME_TYPE
+} from '@modelcontextprotocol/ext-apps/server';
 import { z } from 'zod';
 
 import {
@@ -44,138 +50,193 @@ app.get('/', (req, res) => {
   });
 });
 
-// ─── CREATE MCP SERVER ────────────────────────────────────────
+// ─── LOAD UI WIDGET ──────────────────────────────────────────
+let bookingWidgetHtml = '';
+try {
+  bookingWidgetHtml = readFileSync('./public/booking-widget.html', 'utf8');
+} catch (err) {
+  console.warn('⚠️  Booking widget HTML not found. UI will not be available.');
+}
+
+// ─── CREATE MCP SERVER WITH APPS SDK ─────────────────────────
 function createBookEaseServer() {
   const server = new McpServer({
     name: 'bookease',
     version: '1.0.0',
   });
 
+  // ── REGISTER UI RESOURCE ────────────────────────────────────
+  if (bookingWidgetHtml) {
+    registerAppResource(
+      server,
+      'bookease-widget',
+      'ui://widget/booking.html',
+      {},
+      async () => ({
+        contents: [
+          {
+            uri: 'ui://widget/booking.html',
+            mimeType: RESOURCE_MIME_TYPE,
+            text: bookingWidgetHtml,
+          },
+        ],
+      })
+    );
+  }
+
   // ── TOOL 1: Get Services ────────────────────────────────────
-  server.tool(
+  registerAppTool(
+    server,
     'get_services',
-    'Get all available services with prices and durations',
-    {},
+    {
+      title: 'Get Services',
+      description: 'Get all available services with prices and durations',
+      inputSchema: {},
+      _meta: {
+        ui: { resourceUri: 'ui://widget/booking.html' },
+      },
+    },
     async () => {
       const services = await getServices();
       return {
-        content: [{ type: 'text', text: JSON.stringify({ success: true, services }) }]
+        content: [{ type: 'text', text: `Found ${services.length} services` }],
+        structuredContent: { services }
       };
     }
   );
 
   // ── TOOL 2: Get Staff ───────────────────────────────────────
-  server.tool(
+  registerAppTool(
+    server,
     'get_staff',
-    'Get all available staff members',
-    {},
+    {
+      title: 'Get Staff',
+      description: 'Get all available staff members',
+      inputSchema: {},
+      _meta: {
+        ui: { resourceUri: 'ui://widget/booking.html' },
+      },
+    },
     async () => {
       const staff = await getStaff();
       return {
-        content: [{ type: 'text', text: JSON.stringify({ success: true, staff }) }]
+        content: [{ type: 'text', text: `Found ${staff.length} staff members` }],
+        structuredContent: { staff }
       };
     }
   );
 
   // ── TOOL 3: Get Available Slots ─────────────────────────────
-  server.tool(
+  registerAppTool(
+    server,
     'get_available_slots',
-    'Get available time slots for a specific date and optional staff member',
     {
-      date: z.string().describe('Date in format YYYY-M-D, e.g. 2026-3-25'),
-      staff: z.string().optional().describe('Optional staff name, e.g. Emeka')
+      title: 'Get Available Slots',
+      description: 'Get available time slots for a specific date',
+      inputSchema: {
+        date: z.string().describe('Date in format YYYY-M-D, e.g. 2026-3-25'),
+      },
+      _meta: {
+        ui: { resourceUri: 'ui://widget/booking.html' },
+      },
     },
-    async ({ date, staff }) => {
+    async ({ date }) => {
       if (isPastDate(date)) {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ success: false, error: 'That date is in the past.' }) }]
+          content: [{ type: 'text', text: 'That date is in the past.' }],
+          structuredContent: { available_slots: [] }
         };
       }
-      const booked = await getBookedSlots(date, staff);
+      const booked = await getBookedSlots(date);
       const available = ALL_SLOTS.filter(s => !booked.includes(s));
       return {
-        content: [{ type: 'text', text: JSON.stringify({
-          success: true, date,
-          formatted_date: formatDate(date),
-          available_slots: available,
-          booked_slots: booked,
-          message: available.length > 0
-            ? `${available.length} slots available on ${formatDate(date)}.`
-            : `No slots available on ${formatDate(date)}. Try another date.`
-        })}]
+        content: [{ type: 'text', text: `${available.length} slots available on ${formatDate(date)}` }],
+        structuredContent: { available_slots: available }
       };
     }
   );
 
   // ── TOOL 4: Book Appointment ────────────────────────────────
-  server.tool(
+  registerAppTool(
+    server,
     'book_appointment',
-    'Book an appointment after user has chosen service, staff, date, time, name and phone',
     {
-      customer_name: z.string().describe('Full name of the customer'),
-      customer_phone: z.string().describe('Phone number e.g. 08012345678'),
-      customer_notes: z.string().optional().describe('Special requests (optional)'),
-      service: z.string().describe('Service name e.g. Haircut'),
-      service_duration: z.string().describe('Duration e.g. 30 min'),
-      service_price: z.string().describe('Price e.g. ₦3,500'),
-      staff: z.string().describe('Staff name e.g. Emeka'),
-      date: z.string().describe('Date in format YYYY-M-D'),
-      time: z.string().describe('Time slot e.g. 10:00 AM')
+      title: 'Book Appointment',
+      description: 'Create a new appointment booking',
+      inputSchema: {
+        customer_name: z.string().describe('Full name'),
+        customer_phone: z.string().describe('Phone number'),
+        customer_notes: z.string().optional().describe('Special requests'),
+        service: z.string().describe('Service name'),
+        service_duration: z.string().describe('Duration'),
+        service_price: z.string().describe('Price'),
+        staff: z.string().describe('Staff name'),
+        date: z.string().describe('Date in format YYYY-M-D'),
+        time: z.string().describe('Time slot'),
+      },
+      _meta: {
+        ui: { resourceUri: 'ui://widget/booking.html' },
+      },
     },
     async (args) => {
       if (isPastDate(args.date)) {
         return {
-          content: [{ type: 'text', text: JSON.stringify({ success: false, error: 'Cannot book a past date.' }) }]
+          content: [{ type: 'text', text: 'Cannot book a past date.' }],
         };
       }
       const appointment = await createAppointment(args);
       sendSMS(args.customer_phone, bookingConfirmationMessage(appointment));
       return {
-        content: [{ type: 'text', text: JSON.stringify({
-          success: true, appointment,
-          message: `✅ Booked! ${args.customer_name}'s ${args.service} with ${args.staff} on ${formatDate(args.date)} at ${args.time}.`
-        })}]
+        content: [{ type: 'text', text: `✅ Booked! ${args.customer_name}'s ${args.service} with ${args.staff} on ${formatDate(args.date)} at ${args.time}.` }],
+        structuredContent: { appointment, tasks: [] }
       };
     }
   );
 
   // ── TOOL 5: Get Appointments ────────────────────────────────
-  server.tool(
+  registerAppTool(
+    server,
     'get_appointments',
-    'Get all upcoming appointments, optionally filtered by date or customer phone',
     {
-      date: z.string().optional().describe('Optional date filter YYYY-M-D'),
-      customer_phone: z.string().optional().describe('Optional phone number filter')
+      title: 'Get Appointments',
+      description: 'Get upcoming appointments, optionally filtered by date',
+      inputSchema: {
+        date: z.string().optional().describe('Optional date filter YYYY-M-D'),
+      },
+      _meta: {
+        ui: { resourceUri: 'ui://widget/booking.html' },
+      },
     },
-    async ({ date, customer_phone }) => {
+    async ({ date }) => {
       let appointments = await getAppointments(date);
-      if (customer_phone) {
-        appointments = appointments.filter(a =>
-          a.customer_phone.replace(/\s/g, '') === customer_phone.replace(/\s/g, '')
-        );
-      }
       return {
-        content: [{ type: 'text', text: JSON.stringify({ success: true, appointments, count: appointments.length }) }]
+        content: [{ type: 'text', text: `Found ${appointments.length} upcoming appointments` }],
+        structuredContent: { appointments }
       };
     }
   );
 
   // ── TOOL 6: Cancel Appointment ──────────────────────────────
-  server.tool(
+  registerAppTool(
+    server,
     'cancel_appointment',
-    'Cancel an appointment by its ID. Always confirm with user first.',
     {
-      appointment_id: z.string().describe('The UUID of the appointment to cancel')
+      title: 'Cancel Appointment',
+      description: 'Cancel an existing appointment by ID',
+      inputSchema: {
+        appointment_id: z.string().describe('The UUID of the appointment to cancel'),
+      },
+      _meta: {
+        ui: { resourceUri: 'ui://widget/booking.html' },
+      },
     },
     async ({ appointment_id }) => {
       const existing = await getAppointmentById(appointment_id);
       const cancelled = await cancelAppointment(appointment_id);
       sendSMS(existing.customer_phone, cancellationMessage(existing));
       return {
-        content: [{ type: 'text', text: JSON.stringify({
-          success: true, appointment: cancelled,
-          message: `❌ Cancelled: ${existing.customer_name}'s ${existing.service} on ${formatDate(existing.date)} at ${existing.time}.`
-        })}]
+        content: [{ type: 'text', text: `✅ Cancelled: ${existing.customer_name}'s ${existing.service} on ${formatDate(existing.date)} at ${existing.time}.` }],
+        structuredContent: { appointment: cancelled }
       };
     }
   );

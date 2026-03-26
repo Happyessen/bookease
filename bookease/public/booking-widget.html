@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>BookEase - Book Appointment</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --primary: #111bf5;
+        --primary-dark: #0a0aa8;
+        --success: #10b981;
+        --danger: #ef4444;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+        color: var(--gray-800);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+      }
+
+      body {
+        background: var(--gray-100);
+        padding: 16px;
+      }
+
+      main {
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        color: white;
+        padding: 24px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+        margin-bottom: 4px;
+      }
+
+      .header p {
+        opacity: 0.9;
+        font-size: 0.9rem;
+      }
+
+      .content {
+        padding: 24px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--gray-700);
+        font-size: 0.95rem;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid var(--gray-200);
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: all 0.2s;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(17, 27, 245, 0.1);
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      .button-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      button {
+        padding: 12px 20px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn-primary:hover:not(:disabled) {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(17, 27, 245, 0.3);
+      }
+
+      .btn-secondary {
+        background: var(--gray-200);
+        color: var(--gray-800);
+      }
+
+      .btn-secondary:hover:not(:disabled) {
+        background: var(--gray-300);
+      }
+
+      button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+      }
+
+      .status {
+        padding: 16px;
+        border-radius: 10px;
+        margin-bottom: 16px;
+        font-weight: 500;
+        display: none;
+      }
+
+      .status.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .status.error {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+
+      .status.loading {
+        background: rgba(17, 27, 245, 0.1);
+        color: var(--primary);
+        border: 1px solid rgba(17, 27, 245, 0.3);
+      }
+
+      .status.show {
+        display: block;
+      }
+
+      .section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-top: 24px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--gray-200);
+        color: var(--gray-800);
+      }
+
+      .section-title:first-child {
+        margin-top: 0;
+      }
+
+      .slots-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .slot-btn {
+        padding: 10px;
+        background: var(--gray-100);
+        border: 2px solid var(--gray-200);
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+        font-size: 0.85rem;
+      }
+
+      .slot-btn:hover {
+        border-color: var(--primary);
+        background: rgba(17, 27, 245, 0.05);
+      }
+
+      .slot-btn.selected {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+      }
+
+      .loading-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="header">
+        <h1>📅 BookEase</h1>
+        <p>Book Your Appointment</p>
+      </div>
+
+      <div class="content">
+        <div class="status" id="status"></div>
+
+        <form id="booking-form">
+          <!-- Customer Info -->
+          <div class="section-title">Your Information</div>
+
+          <div class="form-group">
+            <label for="customer-name">Full Name *</label>
+            <input
+              id="customer-name"
+              type="text"
+              name="customer_name"
+              placeholder="e.g. John Doe"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="customer-phone">Phone Number *</label>
+            <input
+              id="customer-phone"
+              type="tel"
+              name="customer_phone"
+              placeholder="e.g. 08012345678"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="customer-notes">Special Requests (Optional)</label>
+            <textarea
+              id="customer-notes"
+              name="customer_notes"
+              placeholder="Any special requests or preferences?"
+            ></textarea>
+          </div>
+
+          <!-- Service Selection -->
+          <div class="section-title">Service & Staff</div>
+
+          <div class="form-group">
+            <label for="service">Service *</label>
+            <select id="service" name="service" required>
+              <option value="">Select a service...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="staff">Staff Member *</label>
+            <select id="staff" name="staff" required>
+              <option value="">Select staff...</option>
+            </select>
+          </div>
+
+          <!-- Date & Time -->
+          <div class="section-title">Date & Time</div>
+
+          <div class="form-group">
+            <label for="date">Preferred Date *</label>
+            <input
+              id="date"
+              type="date"
+              name="date"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Available Times *</label>
+            <div class="slots-grid" id="slots-grid">
+              <p style="grid-column: 1/-1; color: #999;">Select a date first</p>
+            </div>
+            <input
+              id="time"
+              type="hidden"
+              name="time"
+              required
+            />
+          </div>
+
+          <!-- Submit -->
+          <div class="button-group">
+            <button type="button" class="btn-secondary" id="reset-btn">
+              Reset
+            </button>
+            <button type="submit" class="btn-primary" id="submit-btn">
+              Book Now
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+
+    <script type="module">
+      const rpcBase = {
+        rpcId: 0,
+        pendingRequests: new Map(),
+
+        rpcRequest(method, params) {
+          return new Promise((resolve, reject) => {
+            const id = ++this.rpcId;
+            this.pendingRequests.set(id, { resolve, reject });
+            window.parent.postMessage(
+              { jsonrpc: "2.0", id, method, params },
+              "*"
+            );
+          });
+        },
+
+        rpcNotify(method, params) {
+          window.parent.postMessage({ jsonrpc: "2.0", method, params }, "*");
+        },
+
+        handleMessage(event) {
+          if (event.source !== window.parent) return;
+          const message = event.data;
+          if (!message || message.jsonrpc !== "2.0") return;
+
+          if (typeof message.id === "number") {
+            const pending = this.pendingRequests.get(message.id);
+            if (!pending) return;
+            this.pendingRequests.delete(message.id);
+
+            if (message.error) {
+              pending.reject(message.error);
+              return;
+            }
+            pending.resolve(message.result);
+          }
+        }
+      };
+
+      window.addEventListener("message", (e) => rpcBase.handleMessage.call(rpcBase, e), {
+        passive: true
+      });
+
+      async function initializeBridge() {
+        const appInfo = { name: "bookease-widget", version: "1.0.0" };
+        const appCapabilities = {};
+        const protocolVersion = "2026-01-26";
+
+        try {
+          await rpcBase.rpcRequest("ui/initialize", {
+            appInfo,
+            appCapabilities,
+            protocolVersion
+          });
+          rpcBase.rpcNotify("ui/notifications/initialized", {});
+          console.log("✅ Bridge initialized");
+        } catch (error) {
+          console.error("❌ Bridge init failed:", error);
+          throw error;
+        }
+      }
+
+      const bridgeReady = initializeBridge();
+
+      async function callTool(name, args) {
+        await bridgeReady;
+        return rpcBase.rpcRequest("tools/call", {
+          name,
+          arguments: args
+        });
+      }
+
+      function setStatus(message, type = "loading") {
+        const el = document.getElementById("status");
+        el.textContent = message;
+        el.className = `status show ${type}`;
+      }
+
+      function clearStatus() {
+        const el = document.getElementById("status");
+        el.className = "status";
+      }
+
+      async function loadServices() {
+        try {
+          setStatus("Loading services...");
+          const result = await callTool("get_services", {});
+          clearStatus();
+
+          let services = [];
+          if (result?.structuredContent?.services) {
+            services = result.structuredContent.services;
+          } else if (typeof result === "string") {
+            const parsed = JSON.parse(result);
+            services = parsed.services || [];
+          }
+
+          const select = document.getElementById("service");
+          select.innerHTML = '<option value="">Select a service...</option>';
+          services.forEach((s) => {
+            const opt = document.createElement("option");
+            opt.value = s.name;
+            opt.textContent = `${s.name} - ${s.duration} (${s.price})`;
+            opt.dataset.duration = s.duration;
+            opt.dataset.price = s.price;
+            select.appendChild(opt);
+          });
+        } catch (error) {
+          setStatus("Failed to load services: " + error.message, "error");
+          console.error(error);
+        }
+      }
+
+      async function loadStaff() {
+        try {
+          const result = await callTool("get_staff", {});
+          let staff = [];
+          if (result?.structuredContent?.staff) {
+            staff = result.structuredContent.staff;
+          } else if (typeof result === "string") {
+            const parsed = JSON.parse(result);
+            staff = parsed.staff || [];
+          }
+
+          const select = document.getElementById("staff");
+          select.innerHTML = '<option value="">Select staff...</option>';
+          staff.forEach((s) => {
+            const opt = document.createElement("option");
+            opt.value = s.name;
+            opt.textContent = s.name;
+            select.appendChild(opt);
+          });
+        } catch (error) {
+          console.error("Failed to load staff:", error);
+        }
+      }
+
+      async function loadSlots(dateStr) {
+        try {
+          if (!dateStr) return;
+
+          const date = new Date(dateStr);
+          const yyyy = date.getFullYear();
+          const m = date.getMonth() + 1;
+          const d = date.getDate();
+          const formattedDate = `${yyyy}-${m}-${d}`;
+
+          setStatus("Loading available slots...");
+          const result = await callTool("get_available_slots", {
+            date: formattedDate
+          });
+          clearStatus();
+
+          let slots = [];
+          if (result?.structuredContent?.available_slots) {
+            slots = result.structuredContent.available_slots;
+          } else if (typeof result === "string") {
+            const parsed = JSON.parse(result);
+            slots = parsed.available_slots || [];
+          }
+
+          const grid = document.getElementById("slots-grid");
+          grid.innerHTML = "";
+
+          if (slots.length === 0) {
+            grid.innerHTML =
+              '<p style="grid-column: 1/-1; color: #ef4444;">No available slots for this date</p>';
+            document.getElementById("time").value = "";
+            return;
+          }
+
+          slots.forEach((slot) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "slot-btn";
+            btn.textContent = slot;
+            btn.onclick = (e) => {
+              e.preventDefault();
+              document.querySelectorAll(".slot-btn").forEach((b) => {
+                b.classList.remove("selected");
+              });
+              btn.classList.add("selected");
+              document.getElementById("time").value = slot;
+            };
+            grid.appendChild(btn);
+          });
+        } catch (error) {
+          setStatus("Failed to load slots: " + error.message, "error");
+          console.error(error);
+        }
+      }
+
+      async function submitBooking(e) {
+        e.preventDefault();
+        const form = e.target;
+        const submitBtn = form.querySelector("button[type=submit]");
+        const originalText = submitBtn.textContent;
+
+        try {
+          const customerName = document.getElementById("customer-name").value;
+          const customerPhone = document.getElementById("customer-phone").value;
+          const customerNotes = document.getElementById("customer-notes").value;
+          const serviceSelect = document.getElementById("service");
+          const service = serviceSelect.value;
+          const serviceDuration = serviceSelect.selectedOptions[0]?.dataset.duration;
+          const servicePrice = serviceSelect.selectedOptions[0]?.dataset.price;
+          const staff = document.getElementById("staff").value;
+          const dateStr = document.getElementById("date").value;
+          const time = document.getElementById("time").value;
+
+          if (!time) {
+            setStatus("Please select a time slot", "error");
+            return;
+          }
+
+          const date = new Date(dateStr);
+          const yyyy = date.getFullYear();
+          const m = date.getMonth() + 1;
+          const d = date.getDate();
+          const formattedDate = `${yyyy}-${m}-${d}`;
+
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = '<span class="loading-spinner"></span> Booking...';
+          setStatus("Booking your appointment...");
+
+          const result = await callTool("book_appointment", {
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            customer_notes: customerNotes,
+            service,
+            service_duration: serviceDuration,
+            service_price: servicePrice,
+            staff,
+            date: formattedDate,
+            time
+          });
+
+          setStatus(
+            `✅ Success! Your appointment is confirmed. Check your SMS for details.`,
+            "success"
+          );
+
+          form.reset();
+          document.getElementById("time").value = "";
+          document.querySelectorAll(".slot-btn").forEach((b) => {
+            b.classList.remove("selected");
+          });
+
+          setTimeout(() => {
+            clearStatus();
+          }, 3000);
+        } catch (error) {
+          setStatus(`❌ Booking failed: ${error?.message || error}`, "error");
+          console.error(error);
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText;
+        }
+      }
+
+      // Event listeners
+      document.getElementById("booking-form").addEventListener("submit", submitBooking);
+
+      document.getElementById("reset-btn").addEventListener("click", (e) => {
+        e.preventDefault();
+        document.getElementById("booking-form").reset();
+        document.getElementById("time").value = "";
+        document.querySelectorAll(".slot-btn").forEach((b) => {
+          b.classList.remove("selected");
+        });
+        document.getElementById("slots-grid").innerHTML =
+          '<p style="grid-column: 1/-1; color: #999;">Select a date first</p>';
+        clearStatus();
+      });
+
+      document.getElementById("date").addEventListener("change", (e) => {
+        document.getElementById("time").value = "";
+        document.querySelectorAll(".slot-btn").forEach((b) => {
+          b.classList.remove("selected");
+        });
+        loadSlots(e.target.value);
+      });
+
+      // Initial load
+      await bridgeReady;
+      await loadServices();
+      await loadStaff();
+    </script>
+  </body>
+</html>

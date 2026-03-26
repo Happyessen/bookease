@@ -19,7 +19,7 @@ import { z } from 'zod';
 import {
   getAppointments, getAppointmentById,
   createAppointment, cancelAppointment,
-  getBookedSlots, getServices, getStaff
+  getBookedSlots, getServices, getManagement
 } from './db.js';
 
 import {
@@ -105,23 +105,23 @@ function createBookEaseServer() {
     }
   );
 
-  // ── TOOL 2: Get Staff ───────────────────────────────────────
+  // ── TOOL 2: Get Management ───────────────────────────────────
   registerAppTool(
     server,
-    'get_staff',
+    'get_management',
     {
-      title: 'Get Staff',
-      description: 'Get all available staff members',
+      title: 'Get Management',
+      description: 'Get all available management team members',
       inputSchema: {},
       _meta: {
         ui: { resourceUri: 'ui://widget/booking.html' },
       },
     },
     async () => {
-      const staff = await getStaff();
+      const management = await getManagement();
       return {
-        content: [{ type: 'text', text: 'Staff list refreshed. Please use the widget.' }],
-        structuredContent: { staff }
+        content: [{ type: 'text', text: 'Management list refreshed. Please use the widget.' }],
+        structuredContent: { management }
       };
     }
   );
@@ -164,14 +164,12 @@ function createBookEaseServer() {
       title: 'Book Appointment',
       description: 'Create a new appointment booking',
       inputSchema: {
-        customer_name: z.string().describe('Full name'),
-        customer_email: z.string().email().describe('Email address'),
-        customer_phone: z.string().describe('Phone number'),
-        customer_notes: z.string().optional().describe('Special requests'),
+        name: z.string().describe('Name'),
+        email: z.string().email().describe('Email'),
+        phone: z.string().describe('Phone'),
+        notes: z.string().optional().describe('Special requests'),
         service: z.string().describe('Service name'),
-        service_duration: z.string().describe('Duration'),
-        service_price: z.string().describe('Price'),
-        staff: z.string().describe('Staff name'),
+        management: z.string().describe('Management team member'),
         date: z.string().describe('Date in format YYYY-M-D'),
         time: z.string().describe('Time slot'),
       },
@@ -187,16 +185,16 @@ function createBookEaseServer() {
         };
       }
       const appointment = await createAppointment(args);
-      sendSMS(args.customer_phone, bookingConfirmationMessage(appointment));
+      sendSMS(args.phone, bookingConfirmationMessage(appointment));
       return {
         content: [{ type: 'text', text: 'Appointment booked successfully. See widget for details.' }],
         structuredContent: { booking: {
           service: args.service,
-          staff: args.staff,
+          management: args.management,
           date: formatDate(args.date),
           time: args.time,
-          customer_name: args.customer_name,
-          customer_phone: args.customer_phone
+          name: args.name,
+          phone: args.phone
         } }
       };
     }
@@ -242,7 +240,7 @@ function createBookEaseServer() {
     async ({ appointment_id }) => {
       const existing = await getAppointmentById(appointment_id);
       const cancelled = await cancelAppointment(appointment_id);
-      sendSMS(existing.customer_phone, cancellationMessage(existing));
+      sendSMS(existing.phone, cancellationMessage(existing));
       return {
         content: [{ type: 'text', text: 'Appointment canceled; update shown in widget.' }],
         structuredContent: { appointment: cancelled }

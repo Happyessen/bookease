@@ -42,9 +42,8 @@ export async function getAppointmentById(id) {
 }
 
 export async function createAppointment({ 
-  customer_name, customer_email, customer_phone, customer_notes,
-  service, service_duration, service_price,
-  staff, date, time 
+  name, email, phone, notes,
+  service, management, date, time 
 }) {
   // Check if slot is already taken
   const { data: existing } = await supabase
@@ -52,19 +51,18 @@ export async function createAppointment({
     .select('id')
     .eq('date', date)
     .eq('time', time)
-    .eq('staff', staff)
+    .eq('management', management)
     .eq('status', 'confirmed');
 
   if (existing && existing.length > 0) {
-    throw new Error(`Sorry, ${time} on ${date} with ${staff} is already booked.`);
+    throw new Error(`Sorry, ${time} on ${date} with ${management} is already booked.`);
   }
 
   const { data, error } = await supabase
     .from('appointments')
     .insert([{
-      customer_name, customer_email, customer_phone, customer_notes,
-      service, service_duration, service_price,
-      staff, date, time, status: 'confirmed'
+      name, email, phone, notes,
+      service, management, date, time, status: 'confirmed'
     }])
     .select()
     .single();
@@ -85,14 +83,14 @@ export async function cancelAppointment(id) {
   return data;
 }
 
-export async function getBookedSlots(date, staff = null) {
+export async function getBookedSlots(date, management = null) {
   let query = supabase
     .from('appointments')
-    .select('time, staff')
+    .select('time, management')
     .eq('date', date)
     .eq('status', 'confirmed');
 
-  if (staff) query = query.eq('staff', staff);
+  if (management) query = query.eq('management', management);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
@@ -111,9 +109,9 @@ export async function getServices() {
   return data;
 }
 
-export async function getStaff() {
+export async function getManagement() {
   const { data, error } = await supabase
-    .from('staff')
+    .from('management')
     .select('*')
     .eq('active', true);
 

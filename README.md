@@ -82,7 +82,7 @@ Open `.env` in any text editor (Notepad, VS Code, etc.) and fill it in:
 
 ```env
 SUPABASE_URL=https://abcdefgh.supabase.co
-SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_KEY=eyxxxxxxxxxxxxxxxxxxxxxkpXVCJ9...
 TERMII_API_KEY=TLxxxxxxxxxxxx
 TERMII_SENDER_ID=BookEase
 PORT=3000

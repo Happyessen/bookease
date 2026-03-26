@@ -99,7 +99,7 @@ function createBookEaseServer() {
     async () => {
       const services = await getServices();
       return {
-        content: [{ type: 'text', text: `Found ${services.length} services` }],
+        content: [{ type: 'text', text: 'Updated service list. Please use the widget.' }],
         structuredContent: { services }
       };
     }
@@ -120,7 +120,7 @@ function createBookEaseServer() {
     async () => {
       const staff = await getStaff();
       return {
-        content: [{ type: 'text', text: `Found ${staff.length} staff members` }],
+        content: [{ type: 'text', text: 'Staff list refreshed. Please use the widget.' }],
         structuredContent: { staff }
       };
     }
@@ -143,14 +143,14 @@ function createBookEaseServer() {
     async ({ date }) => {
       if (isPastDate(date)) {
         return {
-          content: [{ type: 'text', text: 'That date is in the past.' }],
+          content: [{ type: 'text', text: 'Selected date is in the past. Change date.' }],
           structuredContent: { available_slots: [] }
         };
       }
       const booked = await getBookedSlots(date);
       const available = ALL_SLOTS.filter(s => !booked.includes(s));
       return {
-        content: [{ type: 'text', text: `${available.length} slots available on ${formatDate(date)}` }],
+        content: [{ type: 'text', text: 'Loaded slots; update shown in widget.' }],
         structuredContent: { available_slots: available }
       };
     }
@@ -182,13 +182,21 @@ function createBookEaseServer() {
       if (isPastDate(args.date)) {
         return {
           content: [{ type: 'text', text: 'Cannot book a past date.' }],
+          structuredContent: { booking: null }
         };
       }
       const appointment = await createAppointment(args);
       sendSMS(args.customer_phone, bookingConfirmationMessage(appointment));
       return {
-        content: [{ type: 'text', text: `✅ Booked! ${args.customer_name}'s ${args.service} with ${args.staff} on ${formatDate(args.date)} at ${args.time}.` }],
-        structuredContent: { appointment, tasks: [] }
+        content: [{ type: 'text', text: 'Appointment booked successfully. See widget for details.' }],
+        structuredContent: { booking: {
+          service: args.service,
+          staff: args.staff,
+          date: formatDate(args.date),
+          time: args.time,
+          customer_name: args.customer_name,
+          customer_phone: args.customer_phone
+        } }
       };
     }
   );
@@ -210,7 +218,7 @@ function createBookEaseServer() {
     async ({ date }) => {
       let appointments = await getAppointments(date);
       return {
-        content: [{ type: 'text', text: `Found ${appointments.length} upcoming appointments` }],
+        content: [{ type: 'text', text: 'Appointments loaded; see widget.' }],
         structuredContent: { appointments }
       };
     }
@@ -235,7 +243,7 @@ function createBookEaseServer() {
       const cancelled = await cancelAppointment(appointment_id);
       sendSMS(existing.customer_phone, cancellationMessage(existing));
       return {
-        content: [{ type: 'text', text: `✅ Cancelled: ${existing.customer_name}'s ${existing.service} on ${formatDate(existing.date)} at ${existing.time}.` }],
+        content: [{ type: 'text', text: 'Appointment canceled; update shown in widget.' }],
         structuredContent: { appointment: cancelled }
       };
     }

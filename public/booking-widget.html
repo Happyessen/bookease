@@ -253,6 +253,7 @@
 
       <div class="content">
         <div class="status" id="status"></div>
+        <div class="status" id="tool-result" style="display:none;"></div>
 
         <form id="booking-form">
           <!-- Customer Info -->
@@ -384,7 +385,17 @@
         }
       };
 
-      window.addEventListener("message", (e) => rpcBase.handleMessage.call(rpcBase, e), {
+      window.addEventListener("message", (e) => {
+        rpcBase.handleMessage.call(rpcBase, e);
+
+        if (e.source !== window.parent) return;
+        const message = e.data;
+        if (!message || message.jsonrpc !== "2.0") return;
+
+        if (message.method === "ui/notifications/tool-result") {
+          updateFromResponse(message.params);
+        }
+      }, {
         passive: true
       });
 
@@ -426,6 +437,53 @@
       function clearStatus() {
         const el = document.getElementById("status");
         el.className = "status";
+      }
+
+      function setToolResult(message, type = "success") {
+        const el = document.getElementById("tool-result");
+        el.textContent = message;
+        el.className = `status show ${type}`;
+        el.style.display = "block";
+      }
+
+      function clearToolResult() {
+        const el = document.getElementById("tool-result");
+        el.className = "status";
+        el.style.display = "none";
+      }
+
+      function updateFromResponse(response) {
+        if (!response) return;
+
+        if (response.structuredContent?.booking) {
+          const b = response.structuredContent.booking;
+          setToolResult(
+            `Booked ${b.service} with ${b.staff} on ${b.date} at ${b.time}.`,
+            "success"
+          );
+          return;
+        }
+
+        if (response.structuredContent?.services) {
+          setToolResult(
+            `Service list updated: ${response.structuredContent.services.length} items`,
+            "success"
+          );
+          return;
+        }
+
+        if (response.structuredContent?.available_slots) {
+          const count = response.structuredContent.available_slots.length;
+          setToolResult(`Available slots: ${count}`);
+          return;
+        }
+
+        if (response.content?.length) {
+          const text = response.content.map((item) => item.text).join(" ");
+          if (text.trim()) {
+            setToolResult(text, "info");
+          }
+        }
       }
 
       async function loadServices() {

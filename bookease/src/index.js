@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
     status: 'running',
     transport: 'streamable-http',
     endpoint: '/mcp',
-    business: process.env.BUSINESS_NAME || 'BookEase Barbershop'
+    business: process.env.BUSINESS_NAME || 'Jada Squad'
   });
 });
 
@@ -165,6 +165,7 @@ function createBookEaseServer() {
       description: 'Create a new appointment booking',
       inputSchema: {
         customer_name: z.string().describe('Full name'),
+        customer_email: z.string().email().describe('Email address'),
         customer_phone: z.string().describe('Phone number'),
         customer_notes: z.string().optional().describe('Special requests'),
         service: z.string().describe('Service name'),

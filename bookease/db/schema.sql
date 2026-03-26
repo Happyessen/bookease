@@ -11,6 +11,7 @@ create table if not exists appointments (
 
   -- Customer info
   customer_name text not null,
+  customer_email text not null,
   customer_phone text not null,
   customer_notes text,
 
@@ -46,16 +47,23 @@ create table if not exists staff (
 
 -- Default services
 insert into services (name, duration, price) values
-  ('Haircut', '30 min', '₦3,500'),
-  ('Beard Trim', '20 min', '₦2,000'),
-  ('Full Grooming', '60 min', '₦8,000'),
-  ('Scalp Treatment', '45 min', '₦5,500');
+  ('AI AGENTS - MarCom AI Agent', '60 min', ''),
+  ('AI AGENTS - SalesPro AI Agent', '60 min', ''),
+  ('AI AGENTS - Procurement AI Agent', '60 min', ''),
+  ('AI AGENTS - Market Intel AI Agent', '60 min', ''),
+  ('AI AGENTS - Due Diligence AI Agent', '60 min', ''),
+  ('AI AGENTS - HR Ops AI Agent', '60 min', ''),
+  ('AI AGENTS - SourcePro AI Agent', '60 min', ''),
+  ('AI AGENTS - BidPro AI Agent', '60 min', ''),
+  ('STAFF AUGMENTATION', '120 min', ''),
+  ('BI & Analytics', '120 min', ''),
+  ('AI Models', '120 min', '');
 
 -- Default staff
-insert into staff (name) values
-  ('Emeka'),
-  ('Tunde'),
-  ('Bisi');
+insert into management (name) values
+  ('Azeez'),
+  ('Piero'),
+    ('Happy');
 
 -- ─── ROW LEVEL SECURITY (optional, recommended) ──────────────
 -- Allows public read/write for now (fine for MVP)

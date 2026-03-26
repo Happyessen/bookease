@@ -247,8 +247,8 @@
   <body>
     <main>
       <div class="header">
-        <h1>📅 BookEase</h1>
-        <p>Book Your Appointment</p>
+        <h1>🌟 Jada Squad</h1>
+        <p>Book Your Cleanup & Waste Service</p>
       </div>
 
       <div class="content">
@@ -260,7 +260,7 @@
           <div class="section-title">Your Information</div>
 
           <div class="form-group">
-            <label for="customer-name">Full Name *</label>
+            <label for="customer-name">Name *</label>
             <input
               id="customer-name"
               type="text"
@@ -271,7 +271,18 @@
           </div>
 
           <div class="form-group">
-            <label for="customer-phone">Phone Number *</label>
+            <label for="customer-email">Email *</label>
+            <input
+              id="customer-email"
+              type="email"
+              name="customer_email"
+              placeholder="e.g. you@example.com"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="customer-phone">Phone *</label>
             <input
               id="customer-phone"
               type="tel"
@@ -505,7 +516,7 @@
           services.forEach((s) => {
             const opt = document.createElement("option");
             opt.value = s.name;
-            opt.textContent = `${s.name} - ${s.duration} (${s.price})`;
+            opt.textContent = s.name;
             opt.dataset.duration = s.duration;
             opt.dataset.price = s.price;
             select.appendChild(opt);
@@ -603,6 +614,7 @@
 
         try {
           const customerName = document.getElementById("customer-name").value;
+          const customerEmail = document.getElementById("customer-email").value;
           const customerPhone = document.getElementById("customer-phone").value;
           const customerNotes = document.getElementById("customer-notes").value;
           const serviceSelect = document.getElementById("service");
@@ -630,6 +642,7 @@
 
           const result = await callTool("book_appointment", {
             customer_name: customerName,
+            customer_email: customerEmail,
             customer_phone: customerPhone,
             customer_notes: customerNotes,
             service,

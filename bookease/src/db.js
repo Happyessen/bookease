@@ -42,7 +42,7 @@ export async function getAppointmentById(id) {
 }
 
 export async function createAppointment({ 
-  customer_name, customer_phone, customer_notes,
+  customer_name, customer_email, customer_phone, customer_notes,
   service, service_duration, service_price,
   staff, date, time 
 }) {
@@ -62,7 +62,7 @@ export async function createAppointment({
   const { data, error } = await supabase
     .from('appointments')
     .insert([{
-      customer_name, customer_phone, customer_notes,
+      customer_name, customer_email, customer_phone, customer_notes,
       service, service_duration, service_price,
       staff, date, time, status: 'confirmed'
     }])

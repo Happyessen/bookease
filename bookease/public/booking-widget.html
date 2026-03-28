@@ -469,23 +469,18 @@
         if (response.structuredContent?.booking) {
           const b = response.structuredContent.booking;
           setToolResult(
-            `Booked ${b.service} with ${b.staff} on ${b.date} at ${b.time}.`,
+            `✅ Booking Confirmed! ${b.service} with ${b.staff} on ${b.date} at ${b.time}.`,
             "success"
           );
           return;
         }
 
+        // Don't display internal service/slot messages to user
         if (response.structuredContent?.services) {
-          setToolResult(
-            `Service list updated: ${response.structuredContent.services.length} items`,
-            "success"
-          );
           return;
         }
 
         if (response.structuredContent?.available_slots) {
-          const count = response.structuredContent.available_slots.length;
-          setToolResult(`Available slots: ${count}`);
           return;
         }
 
@@ -652,7 +647,11 @@
           });
 
           setStatus(
-            `✅ Success! Your appointment is confirmed. Check your SMS for details.`,
+            `✅ Success! Your appointment is confirmed.`,
+            "success"
+          );
+          setToolResult(
+            `✅ Booking Confirmed! Your appointment for ${service} with ${management} on ${formattedDate} at ${time} has been booked successfully. Check your SMS for details.`,
             "success"
           );
 
@@ -664,7 +663,7 @@
 
           setTimeout(() => {
             clearStatus();
-          }, 3000);
+          }, 10000);
         } catch (error) {
           setStatus(`❌ Booking failed: ${error?.message || error}`, "error");
           console.error(error);

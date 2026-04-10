@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  bookease:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - TERMII_API_KEY=${TERMII_API_KEY}
+      - TERMII_SENDER_ID=${TERMII_SENDER_ID}
+      - BUSINESS_NAME=${BUSINESS_NAME}
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/node_modules
+    restart: unless-stopped

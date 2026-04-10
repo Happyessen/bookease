@@ -109,7 +109,56 @@ Open http://localhost:3000 in your browser — you'll see your server info.
 
 ---
 
-### STEP 7 — Deploy to Railway (Make It Live)
+### STEP 7 — Docker Deployment (Alternative to Railway)
+
+For containerized deployment to platforms like Azure Container Apps, Docker Hub, or any container registry:
+
+#### Build and Run Locally with Docker
+
+```bash
+# Build the Docker image
+docker build -t bookease-mcp-server .
+
+# Run the container
+docker run -p 3000:3000 --env-file .env bookease-mcp-server
+```
+
+#### Or use Docker Compose (Recommended for Development)
+
+```bash
+# Start with docker-compose
+docker-compose up --build
+```
+
+#### Deploy to Container Apps
+
+1. **Build and push to a registry:**
+   ```bash
+   # Tag the image
+   docker tag bookease-mcp-server your-registry/bookease-mcp-server:v1.0.0
+
+   # Push to registry (Docker Hub, ACR, etc.)
+   docker push your-registry/bookease-mcp-server:v1.0.0
+   ```
+
+2. **Deploy to Azure Container Apps:**
+   - Create a Container App in Azure Portal
+   - Use your pushed image
+   - Set environment variables in the Container App configuration
+   - Expose port 3000
+   - Set up ingress if needed
+
+3. **Environment Variables Required:**
+   - `SUPABASE_URL`
+   - `SUPABASE_KEY`
+   - `TERMII_API_KEY` (optional)
+   - `TERMII_SENDER_ID` (optional)
+   - `BUSINESS_NAME` (optional)
+   - `PORT=3000`
+
+---
+
+### STEP 8 — Deploy to Railway (Alternative Deployment)
 
 Railway gives you a free public URL so ChatGPT can reach your server.
 
@@ -132,7 +181,7 @@ Railway gives you a free public URL so ChatGPT can reach your server.
 
 ---
 
-### STEP 8 — Connect to ChatGPT
+### STEP 9 — Connect to ChatGPT
 
 1. Go to https://chatgpt.com
 2. Click your profile picture → **Settings**
@@ -143,7 +192,7 @@ Railway gives you a free public URL so ChatGPT can reach your server.
 
 ---
 
-### STEP 9 — Test It in ChatGPT
+### STEP 10 — Test It in ChatGPT
 
 Try saying:
 - *"What services does BookEase offer?"*
@@ -155,7 +204,7 @@ Try saying:
 
 ---
 
-### STEP 10 — Submit to ChatGPT App Store (Optional)
+### STEP 11 — Submit to ChatGPT App Store (Optional)
 
 Once your app is working and deployed:
 

@@ -50,6 +50,16 @@ app.get('/', (req, res) => {
   });
 });
 
+// Serve booking widget UI
+app.get('/widget', (req, res) => {
+  if (bookingWidgetHtml) {
+    res.setHeader('Content-Type', 'text/html');
+    res.send(bookingWidgetHtml);
+  } else {
+    res.status(404).send('Booking widget not available');
+  }
+});
+
 // ─── LOAD UI WIDGET ──────────────────────────────────────────
 let bookingWidgetHtml = '';
 try {
